@@ -1,0 +1,160 @@
+body,
+html {
+    background-color: #f0f8ff;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    text-align: center;
+}
+
+#new-task-form {
+    display: flex;
+    margin-bottom: 24px;
+}
+
+#new-task-input {
+    flex: 1;
+    padding: 10px;
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+#new-task-form label {
+    margin-right: 6px;
+}
+
+#new-task-form input[type="radio"] {
+    margin: 3px;
+}
+
+#tasks-list {
+    list-style: none;
+    padding: 0;
+}
+
+.task {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #ffffff;
+    /* Ensures text is readable on colored backgrounds */
+}
+
+/* Style for the Priority Dropdown */
+select.task-priority {
+    padding: 3px ;
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    outline: none;
+}
+
+.task.done {
+    text-decoration: line-through;
+    color: #888;
+}
+
+.task button {
+    border: none;
+    background-color: #ff0000;
+    color: #ffffff;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+/* Button Styles */
+ .submit-button {
+    background-color: #4CAF50;
+    /* Green Background */
+    color: #ffffff;
+    padding: 11px 6px;
+    font-size: 15px;
+    text-decoration: none;
+    /* Remove underline from links */
+    display: inline-block;
+    /* Allows setting dimensions */
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 4px #999;
+    /* Shadow effect for depth */
+    transition: all 0.3s ease;
+    /* Smooth transition for hover effects */
+}
+
+ .submit-button:hover {
+    background-color: #45a049;
+    /* Darker shade of green on hover */
+    box-shadow: 0 8px #999;
+    /* Shadow effect for depth */
+    transform: translateY(-2px);
+    /* Button moves up slightly */
+}
+
+.submit-button:active {
+    background-color: #3e8e41;
+    /* Even darker green when the button is clicked */
+    box-shadow: 0 5px #666;
+    /* Push effect on click */
+    transform: translateY(4px);
+    /* Moves the button down when clicked */
+}
+
+.priority-high {
+    background-color: #ff4136;
+    /* Red for high priority */
+}
+
+.priority-medium {
+    background-color: #ff851b;
+    /* Orange for medium priority */
+}
+
+.priority-low {
+    background-color: #2ecc40;
+    /* Green for low priority */
+}
+
+/* Media Query for Small Screens (Mobile Devices) */
+@media (max-width: 600px) {
+
+    .app-container {
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    #new-task-form {
+        flex-direction: column;
+    }
+
+    #new-task-input {
+        width: 94%;
+    }
+
+    #new-task-form label {
+        margin-right: 15px;
+    }
+
+    aside {
+        width: 100%;
+        margin-top: 12px;
+        text-align: center;
+    }
+}
