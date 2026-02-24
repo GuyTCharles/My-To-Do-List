@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="app.css">
+</head>
+
+<body>
+    <main class="app-shell">
+        <header class="hero">
+            <div class="hero-head">
+                <div class="hero-copy">
+                    <p class="hero-kicker">Personal Productivity</p>
+                    <div class="hero-title-row">
+                        <h1>Focus Board</h1>
+                        <button
+                            id="theme-toggle"
+                            class="btn btn-secondary theme-toggle"
+                            type="button"
+                            aria-pressed="false"
+                            aria-label="Switch to dark mode"
+                            title="Switch to dark mode"
+                        >
+                            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M21 12.8A9 9 0 1111.2 3a7 7 0 109.8 9.8Z" transform="translate(24 0) scale(-1 1)"></path>
+                            </svg>
+                            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="4"></circle>
+                                <path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <p class="hero-subtitle">Plan clearly, execute faster, and keep momentum throughout the day.</p>
+        </header>
+
+        <section class="panel composer-panel">
+            <form id="new-task-form" autocomplete="off">
+                <label class="sr-only" for="new-task-input">Task description</label>
+                <input
+                    type="text"
+                    id="new-task-input"
+                    placeholder="Add a task you want to complete today..."
+                    maxlength="180"
+                >
+                <label class="sr-only" for="new-task-due-date">Due date</label>
+                <input type="date" id="new-task-due-date">
+
+                <div class="composer-footer">
+                    <fieldset class="priority-group" aria-label="Task priority">
+                        <legend>Priority</legend>
+                        <label class="priority-chip">
+                            <input type="radio" name="priority" value="High" checked>
+                            <span>High</span>
+                        </label>
+                        <label class="priority-chip">
+                            <input type="radio" name="priority" value="Medium">
+                            <span>Medium</span>
+                        </label>
+                        <label class="priority-chip">
+                            <input type="radio" name="priority" value="Low">
+                            <span>Low</span>
+                        </label>
+                    </fieldset>
+
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel task-panel">
+            <div class="task-panel-head">
+                <h2>Tasks</h2>
+                <p class="task-summary" id="task-summary" aria-live="polite">
+                    <span><strong id="count-total">0</strong> total</span>
+                    <span><strong id="count-active">0</strong> active</span>
+                    <span><strong id="count-done">0</strong> done</span>
+                </p>
+            </div>
+
+            <div class="task-toolbar">
+                <div class="filter-group" role="tablist" aria-label="Task filters">
+                    <button class="btn btn-filter is-active" type="button" data-filter="all">All</button>
+                    <button class="btn btn-filter" type="button" data-filter="active">Active</button>
+                    <button class="btn btn-filter" type="button" data-filter="completed">Completed</button>
+                </div>
+
+                <div class="task-toolbar-controls">
+                    <label class="sort-wrap" for="priority-filter">
+                        <span>Priority</span>
+                        <select id="priority-filter">
+                            <option value="all">All</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </label>
+
+                    <label class="sort-wrap" for="sort-mode">
+                        <span>Sort</span>
+                        <select id="sort-mode">
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="priority-desc">Priority (High-Low)</option>
+                            <option value="priority-asc">Priority (Low-High)</option>
+                            <option value="due-soon">Due Date (Soonest)</option>
+                            <option value="due-late">Due Date (Latest)</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <ul id="tasks-list" class="tasks-list" aria-live="polite"></ul>
+            <p id="empty-state" class="empty-state">No tasks yet. Add your first task above.</p>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>
