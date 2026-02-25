@@ -80,6 +80,32 @@
         return value.length > 0 && !/[<>]/.test(value);
     }
 
+    // Convert Date object to local ISO date (YYYY-MM-DD).
+    function toLocalISODate(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return "";
+        }
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    // Read a reliable ISO date from an <input type="date"> across browser variations.
+    function getISOFromDateInputElement(input) {
+        if (!input) {
+            return "";
+        }
+
+        const normalizedFromValue = normalizeDueDate(input.value);
+        if (normalizedFromValue) {
+            return normalizedFromValue;
+        }
+
+        return toLocalISODate(input.valueAsDate);
+    }
+
     // Convert ISO date to MM/DD/YYYY for consistent display across devices.
     function formatIsoDate(isoDate) {
         const normalizedDate = normalizeDueDate(isoDate);
@@ -106,10 +132,10 @@
         }
 
         if (!useIOSDateFallback) {
-            return normalizeDueDate(input.value);
+            return getISOFromDateInputElement(input);
         }
 
-        return normalizeDueDate(input.dataset.isoDate || input.value);
+        return normalizeDueDate(input.dataset.isoDate) || getISOFromDateInputElement(input);
     }
 
     // Force text-mode rendering on iOS so empty and filled states share a consistent format.
@@ -166,7 +192,7 @@
 
         input.addEventListener("blur", function () {
             if (input.type === "date") {
-                const normalizedDate = normalizeDueDate(input.value);
+                const normalizedDate = getISOFromDateInputElement(input);
                 if (normalizedDate) {
                     input.dataset.isoDate = normalizedDate;
                 }
@@ -176,13 +202,20 @@
 
         input.addEventListener("change", function () {
             // Change is a committed picker action, so allow updates and explicit clears.
-            input.dataset.isoDate = normalizeDueDate(input.value);
+            if (input.value === "") {
+                input.dataset.isoDate = "";
+            } else {
+                const normalizedDate = getISOFromDateInputElement(input);
+                if (normalizedDate) {
+                    input.dataset.isoDate = normalizedDate;
+                }
+            }
             syncDateInputPresentation(input, placeholderText);
         });
 
         // Some iOS versions update the field on "input" before "change".
         input.addEventListener("input", function () {
-            const normalizedDate = normalizeDueDate(input.value);
+            const normalizedDate = getISOFromDateInputElement(input);
             if (!normalizedDate) {
                 return;
             }
