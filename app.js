@@ -106,6 +106,15 @@
         return toLocalISODate(input.valueAsDate);
     }
 
+    // Apply a dynamic minimum date so past dates cannot be selected.
+    function applyMinDateConstraint(input) {
+        if (!input) {
+            return;
+        }
+
+        input.min = getTodayISO();
+    }
+
     // Convert ISO date to MM/DD/YYYY for consistent display across devices.
     function formatIsoDate(isoDate) {
         const normalizedDate = normalizeDueDate(isoDate);
@@ -159,6 +168,8 @@
             return;
         }
 
+        applyMinDateConstraint(input);
+
         const isoDate = getDateInputISOValue(input);
         input.type = "date";
         input.value = isoDate;
@@ -184,6 +195,7 @@
 
         input.dataset.iosDateFallbackAttached = "true";
         input.dataset.isoDate = normalizeDueDate(input.value);
+        applyMinDateConstraint(input);
         syncDateInputPresentation(input, placeholderText);
 
         input.addEventListener("focus", function () {
@@ -239,6 +251,11 @@
         const month = String(today.getMonth() + 1).padStart(2, "0");
         const day = String(today.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
+    }
+
+    // Whether a date is earlier than the current local day.
+    function isPastDate(isoDate) {
+        return Boolean(isoDate) && isoDate < getTodayISO();
     }
 
     // User-facing date label for due badges (fixed MM/DD/YYYY format).
@@ -467,6 +484,7 @@
         dueDateInput.type = "date";
         dueDateInput.className = "task-due-date";
         dueDateInput.value = task.dueDate;
+        applyMinDateConstraint(dueDateInput);
         dueDateInput.setAttribute("aria-label", `Task ${index + 1} due date`);
         dueDateInput.addEventListener("change", function () {
             updateTaskDueDate(index, getDateInputISOValue(this));
@@ -528,6 +546,8 @@
     // Add a task from form values and reconcile active filters if needed.
     function addTask(description, priority, dueDate) {
         const normalizedDescription = normalizeDescription(description);
+        const normalizedDueDate = normalizeDueDate(dueDate);
+
         if (!normalizedDescription) {
             alert("Please add a task.");
             return false;
@@ -538,7 +558,13 @@
             return false;
         }
 
-        const newTask = new Task(normalizedDescription, priority, dueDate, Date.now());
+        if (isPastDate(normalizedDueDate)) {
+            alert("Please choose today or a future date.");
+            syncDateInputPresentation(taskDueDateInput, IOS_DATE_PLACEHOLDER);
+            return false;
+        }
+
+        const newTask = new Task(normalizedDescription, priority, normalizedDueDate, Date.now());
         tasks.unshift(newTask);
 
         let shouldUpdateFilterUI = false;
@@ -606,7 +632,15 @@
 
     // Save edited due date value.
     function updateTaskDueDate(index, dueDate) {
-        tasks[index].dueDate = normalizeDueDate(dueDate);
+        const normalizedDueDate = normalizeDueDate(dueDate);
+
+        if (isPastDate(normalizedDueDate)) {
+            alert("Past dates are not allowed. Please choose today or a future date.");
+            renderTasks();
+            return;
+        }
+
+        tasks[index].dueDate = normalizedDueDate;
         saveTasks();
         renderTasks();
     }
@@ -695,6 +729,7 @@
     activePriorityFilter = priorityFilterSelect.value;
     sortMode = sortModeSelect.value;
     updateFilterButtons();
+    applyMinDateConstraint(taskDueDateInput);
     applyDateInputFallback(taskDueDateInput);
     initializeTheme();
     renderTasks();
