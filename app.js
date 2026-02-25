@@ -166,19 +166,28 @@
 
         input.addEventListener("blur", function () {
             if (input.type === "date") {
-                input.dataset.isoDate = normalizeDueDate(input.value);
+                const normalizedDate = normalizeDueDate(input.value);
+                if (normalizedDate) {
+                    input.dataset.isoDate = normalizedDate;
+                }
             }
             syncDateInputPresentation(input, placeholderText);
         });
 
         input.addEventListener("change", function () {
+            // Change is a committed picker action, so allow updates and explicit clears.
             input.dataset.isoDate = normalizeDueDate(input.value);
             syncDateInputPresentation(input, placeholderText);
         });
 
         // Some iOS versions update the field on "input" before "change".
         input.addEventListener("input", function () {
-            input.dataset.isoDate = normalizeDueDate(input.value);
+            const normalizedDate = normalizeDueDate(input.value);
+            if (!normalizedDate) {
+                return;
+            }
+
+            input.dataset.isoDate = normalizedDate;
             syncDateInputPresentation(input, placeholderText);
         });
 
