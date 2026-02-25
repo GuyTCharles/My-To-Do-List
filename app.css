@@ -1,3 +1,4 @@
+/* Design tokens for light mode */
 :root {
     --bg-main: #faf8f5;
     --bg-main-alt: #eff8ff;
@@ -27,6 +28,7 @@
     --theme-toggle-size: 42px;
 }
 
+/* Theme token overrides for dark mode */
 [data-theme="dark"] {
     --bg-main: #121a24;
     --bg-main-alt: #0f2232;
@@ -50,6 +52,7 @@
     --shadow-soft: 0 20px 45px rgba(3, 8, 18, 0.5);
 }
 
+/* Global reset */
 *,
 *::before,
 *::after {
@@ -62,6 +65,7 @@ body {
     min-height: 100%;
 }
 
+/* Page background and base typography */
 body {
     font-family: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
     color: var(--ink-strong);
@@ -75,6 +79,7 @@ body {
     position: relative;
 }
 
+/* Max-width wrapper for the full app layout */
 .app-shell {
     width: min(920px, 100%);
     margin: 0 auto;
@@ -82,6 +87,7 @@ body {
     gap: 18px;
 }
 
+/* Hero card (title, subtitle, theme switch) */
 .hero {
     background-color: var(--hero-surface);
     border: var(--stroke-thin) solid var(--hero-border);
@@ -93,6 +99,7 @@ body {
     animation: rise-in 450ms ease both;
 }
 
+/* Header composition helpers */
 .hero-head {
     display: flex;
     align-items: flex-start;
@@ -109,6 +116,7 @@ body {
     gap: 12px;
 }
 
+/* Small uppercase label above the title */
 .hero-kicker {
     margin: 0;
     text-transform: uppercase;
@@ -118,6 +126,7 @@ body {
     color: var(--hero-kicker);
 }
 
+/* Fallback when blur support is unavailable */
 @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
     .hero {
         background-color: var(--hero-surface-solid);
@@ -138,6 +147,7 @@ body {
     font-size: 1.03rem;
 }
 
+/* Shared panel container style (composer + task panel) */
 .panel {
     background: var(--surface);
     border: var(--stroke-thin) solid var(--panel-border);
@@ -148,11 +158,13 @@ body {
     animation: rise-in 500ms ease both;
 }
 
+/* Task creation form layout */
 #new-task-form {
     display: grid;
     gap: 14px;
 }
 
+/* Main task text and due-date controls */
 #new-task-input,
 #new-task-due-date {
     width: 100%;
@@ -166,6 +178,7 @@ body {
     transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
+/* Shared focus ring for composer inputs */
 #new-task-input:focus-visible,
 #new-task-due-date:focus-visible {
     outline: none;
@@ -177,6 +190,19 @@ body {
     max-width: 250px;
 }
 
+/* iOS date fallback: show visible placeholder when empty */
+#new-task-due-date.date-empty-fallback,
+.task-due-date.date-empty-fallback {
+    color: var(--ink-muted);
+}
+
+#new-task-due-date.date-empty-fallback::placeholder,
+.task-due-date.date-empty-fallback::placeholder {
+    color: var(--ink-muted);
+    opacity: 1;
+}
+
+/* Footer area of composer form (priority + submit) */
 .composer-footer {
     display: flex;
     align-items: center;
@@ -185,6 +211,7 @@ body {
     flex-wrap: wrap;
 }
 
+/* Priority radio group and chip presentation */
 .priority-group {
     border: 0;
     margin: 0;
@@ -197,7 +224,7 @@ body {
 
 .priority-group legend {
     padding: 0;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     font-size: 0.92rem;
     font-weight: 700;
 }
@@ -231,6 +258,7 @@ body {
     background: #dff6f2;
 }
 
+/* Reusable button primitives */
 .btn {
     border: 0;
     border-radius: var(--radius-sm);
@@ -261,6 +289,7 @@ body {
     color: var(--ink-strong);
 }
 
+/* Icon-only theme toggle button */
 .theme-toggle {
     width: var(--theme-toggle-size);
     height: var(--theme-toggle-size);
@@ -317,6 +346,7 @@ body {
     color: var(--danger);
 }
 
+/* Task panel heading and counters */
 .task-panel-head {
     display: flex;
     justify-content: space-between;
@@ -345,6 +375,7 @@ body {
     color: var(--ink-strong);
 }
 
+/* Filter/sort toolbar */
 .task-toolbar {
     margin-bottom: 14px;
     display: flex;
@@ -399,6 +430,7 @@ body {
     flex-wrap: wrap;
 }
 
+/* Dynamic task list layout */
 .tasks-list {
     list-style: none;
     margin: 0;
@@ -407,6 +439,7 @@ body {
     gap: 11px;
 }
 
+/* Individual task card */
 .task {
     border: var(--stroke-thin) solid var(--line);
     border-left-width: var(--task-accent-size);
@@ -481,6 +514,7 @@ body {
     font-family: inherit;
 }
 
+/* Completed task visual state */
 .task.done .task-desc {
     text-decoration: line-through;
     color: #77889d;
@@ -524,6 +558,7 @@ body {
     border-left-color: #2b9f74;
 }
 
+/* Empty state message when no tasks are visible */
 .empty-state {
     margin: 10px 0 0;
     border: var(--stroke-thin) dashed var(--line);
@@ -534,6 +569,7 @@ body {
     background: color-mix(in srgb, var(--surface-strong) 75%, #f8fbff 25%);
 }
 
+/* Utility class for screen-reader-only labels */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -546,6 +582,7 @@ body {
     border: 0;
 }
 
+/* Entrance animations */
 @keyframes rise-in {
     from {
         opacity: 0;
@@ -568,6 +605,7 @@ body {
     }
 }
 
+/* Tablet and small-screen adaptations */
 @media (max-width: 760px) {
     body {
         padding: 18px 12px 24px;
@@ -627,6 +665,7 @@ body {
     }
 }
 
+/* Very small-screen adaptations */
 @media (max-width: 415px) {
     .hero-title-row {
         flex-direction: row;
