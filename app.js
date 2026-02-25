@@ -1,6 +1,8 @@
 (function () {
+    // Persistent keys and static configuration.
     const STORAGE_KEY = "tasks";
     const THEME_KEY = "focusboard-theme";
+    const IOS_DATE_PLACEHOLDER = "mm / dd / yyyy";
     const PRIORITY_LEVELS = ["High", "Medium", "Low"];
     const PRIORITY_RANK = {
         High: 3,
@@ -8,6 +10,7 @@
         Low: 1
     };
 
+    // Task model stored in memory and serialized to localStorage.
     function Task(description, priority, dueDate, createdAt) {
         this.description = description;
         this.completed = false;
@@ -16,10 +19,12 @@
         this.createdAt = Number(createdAt) || Date.now();
     }
 
+    // Toggle task completion state.
     Task.prototype.toggleComplete = function () {
         this.completed = !this.completed;
     };
 
+    // DOM references.
     const taskForm = document.querySelector("#new-task-form");
     const taskInput = document.querySelector("#new-task-input");
     const taskDueDateInput = document.querySelector("#new-task-due-date");
@@ -33,20 +38,26 @@
     const sortModeSelect = document.querySelector("#sort-mode");
     const themeToggle = document.querySelector("#theme-toggle");
 
+    // UI state for filtering and sorting.
     let activeFilter = "all";
     let activePriorityFilter = "all";
     let sortMode = "newest";
+    const useIOSDateFallback = shouldUseIOSDateFallback();
 
+    // In-memory state loaded once at startup.
     const tasks = loadTasks();
 
+    // Normalize priority values from UI/storage.
     function normalizePriority(priority) {
         return PRIORITY_LEVELS.includes(priority) ? priority : "High";
     }
 
+    // Trim and collapse repeated whitespace.
     function normalizeDescription(value) {
         return value.replace(/\s+/g, " ").trim();
     }
 
+    // Keep only ISO date values (YYYY-MM-DD).
     function normalizeDueDate(value) {
         if (typeof value !== "string" || value.length === 0) {
             return "";
@@ -64,10 +75,72 @@
         return value;
     }
 
+    // Basic input safety and non-empty validation.
     function isValidDescription(value) {
         return value.length > 0 && !/[<>]/.test(value);
     }
 
+    // Detect iOS/macOS touch Safari where empty date inputs can appear blank.
+    function shouldUseIOSDateFallback() {
+        const ua = navigator.userAgent || "";
+        const isIOSDevice = /iPad|iPhone|iPod/.test(ua);
+        const isTouchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+        return isIOSDevice || isTouchMac;
+    }
+
+    // Toggle "date" vs "text" rendering to keep placeholder visible on iOS.
+    function syncDateInputPresentation(input, placeholderText) {
+        if (!useIOSDateFallback || !input) {
+            return;
+        }
+
+        const hasValue = Boolean(input.value);
+        input.type = hasValue ? "date" : "text";
+        input.placeholder = hasValue ? "" : placeholderText;
+        input.classList.toggle("date-empty-fallback", !hasValue);
+
+        if (hasValue) {
+            input.removeAttribute("inputmode");
+        } else {
+            input.setAttribute("inputmode", "none");
+        }
+    }
+
+    // Attach iOS fallback behavior for a date input once.
+    function applyDateInputFallback(input, placeholderText = IOS_DATE_PLACEHOLDER) {
+        if (!useIOSDateFallback || !input) {
+            return;
+        }
+
+        if (input.dataset.iosDateFallbackAttached === "true") {
+            syncDateInputPresentation(input, placeholderText);
+            return;
+        }
+
+        input.dataset.iosDateFallbackAttached = "true";
+        syncDateInputPresentation(input, placeholderText);
+
+        input.addEventListener("focus", function () {
+            input.type = "date";
+            input.placeholder = "";
+            input.classList.remove("date-empty-fallback");
+            input.removeAttribute("inputmode");
+
+            if (typeof input.showPicker === "function") {
+                input.showPicker();
+            }
+        });
+
+        input.addEventListener("blur", function () {
+            syncDateInputPresentation(input, placeholderText);
+        });
+
+        input.addEventListener("change", function () {
+            syncDateInputPresentation(input, placeholderText);
+        });
+    }
+
+    // Build local YYYY-MM-DD for overdue checks.
     function getTodayISO() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -77,6 +150,7 @@
         return `${year}-${month}-${day}`;
     }
 
+    // User-facing date label for due badges.
     function formatDate(dueDate) {
         if (!dueDate) {
             return "No due date";
@@ -94,10 +168,12 @@
         });
     }
 
+    // A task is overdue only when incomplete and due date is before today.
     function isOverdue(task) {
         return !task.completed && Boolean(task.dueDate) && task.dueDate < getTodayISO();
     }
 
+    // Shared helper for action buttons in task cards.
     function createButton(label, buttonClass, onClick) {
         const button = document.createElement("button");
         button.type = "button";
@@ -107,6 +183,7 @@
         return button;
     }
 
+    // Rehydrate tasks from localStorage safely.
     function loadTasks() {
         let storedTasks = [];
         try {
@@ -133,10 +210,12 @@
             .filter(task => isValidDescription(task.description));
     }
 
+    // Persist current in-memory tasks.
     function saveTasks() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
     }
 
+    // Refresh task counters (total/active/done).
     function updateSummary() {
         const done = tasks.filter(task => task.completed).length;
         const total = tasks.length;
@@ -147,6 +226,7 @@
         doneCount.textContent = done;
     }
 
+    // Status filter predicate.
     function matchesActiveFilter(task) {
         if (activeFilter === "active") {
             return !task.completed;
@@ -159,10 +239,12 @@
         return true;
     }
 
+    // Priority filter predicate.
     function matchesPriorityFilter(task) {
         return activePriorityFilter === "all" || task.priority === activePriorityFilter;
     }
 
+    // Compare due dates while keeping "no due date" entries last.
     function compareDueDates(taskA, taskB, latestFirst) {
         const missingDateA = !taskA.dueDate;
         const missingDateB = !taskB.dueDate;
@@ -186,6 +268,7 @@
         return taskA.dueDate.localeCompare(taskB.dueDate);
     }
 
+    // Comparator selected by current sort mode.
     function compareTasks(taskA, taskB) {
         if (sortMode === "oldest") {
             return taskA.createdAt - taskB.createdAt;
@@ -210,6 +293,7 @@
         return taskB.createdAt - taskA.createdAt;
     }
 
+    // Build filtered/sorted task/index pairs for rendering.
     function getVisibleTaskEntries() {
         return tasks
             .map((task, index) => ({ task, index }))
@@ -217,12 +301,14 @@
             .sort((entryA, entryB) => compareTasks(entryA.task, entryB.task));
     }
 
+    // Keep filter button "active" style in sync with state.
     function updateFilterButtons() {
         filterButtons.forEach(button => {
             button.classList.toggle("is-active", button.dataset.filter === activeFilter);
         });
     }
 
+    // Build priority selector for each task row.
     function createPrioritySelect(index, currentPriority) {
         const select = document.createElement("select");
         select.className = "task-priority";
@@ -243,6 +329,7 @@
         return select;
     }
 
+    // Create one task row and wire all row-level interactions.
     function createTaskItem(task, index) {
         const item = document.createElement("li");
         item.className = `task priority-${task.priority.toLowerCase()}`;
@@ -297,6 +384,7 @@
         dueDateInput.addEventListener("change", function () {
             updateTaskDueDate(index, this.value);
         });
+        applyDateInputFallback(dueDateInput);
 
         meta.appendChild(dueBadge);
         meta.appendChild(dueDateInput);
@@ -330,6 +418,7 @@
         return item;
     }
 
+    // Render visible tasks and empty states.
     function renderTasks() {
         tasksList.innerHTML = "";
         const visibleEntries = getVisibleTaskEntries();
@@ -349,6 +438,7 @@
         updateSummary();
     }
 
+    // Add a task from form values and reconcile active filters if needed.
     function addTask(description, priority, dueDate) {
         const normalizedDescription = normalizeDescription(description);
         if (!normalizedDescription) {
@@ -386,18 +476,21 @@
         return true;
     }
 
+    // Remove task at index.
     function removeTask(index) {
         tasks.splice(index, 1);
         saveTasks();
         renderTasks();
     }
 
+    // Toggle completion for task at index.
     function toggleTaskComplete(index) {
         tasks[index].toggleComplete();
         saveTasks();
         renderTasks();
     }
 
+    // Save edited task text after validation.
     function updateTaskDescription(index, description) {
         const normalizedDescription = normalizeDescription(description);
         if (!normalizedDescription) {
@@ -417,18 +510,21 @@
         renderTasks();
     }
 
+    // Save edited priority value.
     function updateTaskPriority(index, priority) {
         tasks[index].priority = normalizePriority(priority);
         saveTasks();
         renderTasks();
     }
 
+    // Save edited due date value.
     function updateTaskDueDate(index, dueDate) {
         tasks[index].dueDate = normalizeDueDate(dueDate);
         saveTasks();
         renderTasks();
     }
 
+    // Bring newly added item into view.
     function scrollToFirstTask() {
         const firstTask = tasksList.firstElementChild;
         if (firstTask) {
@@ -439,6 +535,7 @@
         }
     }
 
+    // Apply selected theme and persist preference.
     function applyTheme(theme) {
         const resolvedTheme = theme === "dark" ? "dark" : "light";
         const nextThemeLabel = resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode";
@@ -449,6 +546,7 @@
         localStorage.setItem(THEME_KEY, resolvedTheme);
     }
 
+    // Initialize theme from localStorage, then system preference fallback.
     function initializeTheme() {
         const storedTheme = localStorage.getItem(THEME_KEY);
         if (storedTheme === "dark" || storedTheme === "light") {
@@ -463,6 +561,7 @@
         applyTheme(prefersDark ? "dark" : "light");
     }
 
+    // Form submission: add task and reset composer inputs.
     taskForm.addEventListener("submit", function (event) {
         event.preventDefault();
         const selectedPriority = document.querySelector("input[name='priority']:checked").value;
@@ -472,10 +571,12 @@
         if (addTask(description, selectedPriority, dueDate)) {
             taskInput.value = "";
             taskDueDateInput.value = "";
+            syncDateInputPresentation(taskDueDateInput, IOS_DATE_PLACEHOLDER);
             taskInput.focus();
         }
     });
 
+    // Status filter buttons.
     filterButtons.forEach(button => {
         button.addEventListener("click", function () {
             activeFilter = this.dataset.filter;
@@ -484,24 +585,29 @@
         });
     });
 
+    // Priority filter dropdown.
     priorityFilterSelect.addEventListener("change", function () {
         activePriorityFilter = this.value;
         renderTasks();
     });
 
+    // Sort mode dropdown.
     sortModeSelect.addEventListener("change", function () {
         sortMode = this.value;
         renderTasks();
     });
 
+    // Theme toggle button.
     themeToggle.addEventListener("click", function () {
         const currentTheme = document.documentElement.getAttribute("data-theme");
         applyTheme(currentTheme === "dark" ? "light" : "dark");
     });
 
+    // Initial boot sequence.
     activePriorityFilter = priorityFilterSelect.value;
     sortMode = sortModeSelect.value;
     updateFilterButtons();
+    applyDateInputFallback(taskDueDateInput);
     initializeTheme();
     renderTasks();
 })();
