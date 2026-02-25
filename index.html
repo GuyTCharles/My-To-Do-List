@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Core metadata and typography resources -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus Board</title>
@@ -11,7 +12,9 @@
 </head>
 
 <body>
+    <!-- Main page shell -->
     <main class="app-shell">
+        <!-- Hero: app identity + theme toggle -->
         <header class="hero">
             <div class="hero-head">
                 <div class="hero-copy">
@@ -40,6 +43,7 @@
             <p class="hero-subtitle">Plan clearly, execute faster, and keep momentum throughout the day.</p>
         </header>
 
+        <!-- Composer: create a task with optional due date and priority -->
         <section class="panel composer-panel">
             <form id="new-task-form" autocomplete="off">
                 <label class="sr-only" for="new-task-input">Task description</label>
@@ -74,6 +78,7 @@
             </form>
         </section>
 
+        <!-- Task board: counters, filters/sorting, rendered tasks, and empty state -->
         <section class="panel task-panel">
             <div class="task-panel-head">
                 <h2>Tasks</h2>
@@ -120,6 +125,7 @@
             <p id="empty-state" class="empty-state">No tasks yet. Add your first task above.</p>
         </section>
     </main>
+    <!-- App behavior -->
     <script src="app.js"></script>
 </body>
 </html>
