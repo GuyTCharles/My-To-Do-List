@@ -80,6 +80,17 @@
         return value.length > 0 && !/[<>]/.test(value);
     }
 
+    // Convert ISO date to MM/DD/YYYY for consistent display across devices.
+    function formatIsoDate(isoDate) {
+        const normalizedDate = normalizeDueDate(isoDate);
+        if (!normalizedDate) {
+            return "";
+        }
+
+        const [year, month, day] = normalizedDate.split("-");
+        return `${month}/${day}/${year}`;
+    }
+
     // Detect iOS/macOS touch Safari where empty date inputs can appear blank.
     function shouldUseIOSDateFallback() {
         const ua = navigator.userAgent || "";
@@ -88,21 +99,49 @@
         return isIOSDevice || isTouchMac;
     }
 
-    // Toggle "date" vs "text" rendering to keep placeholder visible on iOS.
+    // Read normalized ISO value from a date input in both native and iOS-fallback modes.
+    function getDateInputISOValue(input) {
+        if (!input) {
+            return "";
+        }
+
+        if (!useIOSDateFallback) {
+            return normalizeDueDate(input.value);
+        }
+
+        return normalizeDueDate(input.dataset.isoDate || input.value);
+    }
+
+    // Force text-mode rendering on iOS so empty and filled states share a consistent format.
     function syncDateInputPresentation(input, placeholderText) {
         if (!useIOSDateFallback || !input) {
             return;
         }
 
-        const hasValue = Boolean(input.value);
-        input.type = hasValue ? "date" : "text";
-        input.placeholder = hasValue ? "" : placeholderText;
-        input.classList.toggle("date-empty-fallback", !hasValue);
+        const isoDate = getDateInputISOValue(input);
+        input.dataset.isoDate = isoDate;
+        input.type = "text";
+        input.value = isoDate ? formatIsoDate(isoDate) : "";
+        input.placeholder = isoDate ? "" : placeholderText;
+        input.classList.toggle("date-empty-fallback", !isoDate);
+        input.setAttribute("inputmode", "none");
+    }
 
-        if (hasValue) {
-            input.removeAttribute("inputmode");
-        } else {
-            input.setAttribute("inputmode", "none");
+    // Switch to native date mode momentarily to open platform picker.
+    function openNativeDatePicker(input) {
+        if (!useIOSDateFallback || !input) {
+            return;
+        }
+
+        const isoDate = getDateInputISOValue(input);
+        input.type = "date";
+        input.value = isoDate;
+        input.placeholder = "";
+        input.classList.remove("date-empty-fallback");
+        input.removeAttribute("inputmode");
+
+        if (typeof input.showPicker === "function") {
+            input.showPicker();
         }
     }
 
@@ -118,25 +157,35 @@
         }
 
         input.dataset.iosDateFallbackAttached = "true";
+        input.dataset.isoDate = normalizeDueDate(input.value);
         syncDateInputPresentation(input, placeholderText);
 
         input.addEventListener("focus", function () {
-            input.type = "date";
-            input.placeholder = "";
-            input.classList.remove("date-empty-fallback");
-            input.removeAttribute("inputmode");
-
-            if (typeof input.showPicker === "function") {
-                input.showPicker();
-            }
+            openNativeDatePicker(input);
         });
 
         input.addEventListener("blur", function () {
+            if (input.type === "date") {
+                input.dataset.isoDate = normalizeDueDate(input.value);
+            }
             syncDateInputPresentation(input, placeholderText);
         });
 
         input.addEventListener("change", function () {
+            input.dataset.isoDate = normalizeDueDate(input.value);
             syncDateInputPresentation(input, placeholderText);
+        });
+
+        // Some iOS versions update the field on "input" before "change".
+        input.addEventListener("input", function () {
+            input.dataset.isoDate = normalizeDueDate(input.value);
+            syncDateInputPresentation(input, placeholderText);
+        });
+
+        input.addEventListener("click", function () {
+            if (input.type !== "date") {
+                openNativeDatePicker(input);
+            }
         });
     }
 
@@ -161,8 +210,7 @@
             return "No due date";
         }
 
-        const [year, month, day] = normalizedDate.split("-");
-        return `${month}/${day}/${year}`;
+        return formatIsoDate(normalizedDate);
     }
 
     // A task is overdue only when incomplete and due date is before today.
@@ -379,7 +427,7 @@
         dueDateInput.value = task.dueDate;
         dueDateInput.setAttribute("aria-label", `Task ${index + 1} due date`);
         dueDateInput.addEventListener("change", function () {
-            updateTaskDueDate(index, this.value);
+            updateTaskDueDate(index, getDateInputISOValue(this));
         });
         applyDateInputFallback(dueDateInput);
 
@@ -563,11 +611,12 @@
         event.preventDefault();
         const selectedPriority = document.querySelector("input[name='priority']:checked").value;
         const description = taskInput.value;
-        const dueDate = taskDueDateInput.value;
+        const dueDate = getDateInputISOValue(taskDueDateInput);
 
         if (addTask(description, selectedPriority, dueDate)) {
             taskInput.value = "";
             taskDueDateInput.value = "";
+            taskDueDateInput.dataset.isoDate = "";
             syncDateInputPresentation(taskDueDateInput, IOS_DATE_PLACEHOLDER);
             taskInput.focus();
         }
