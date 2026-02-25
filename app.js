@@ -150,22 +150,19 @@
         return `${year}-${month}-${day}`;
     }
 
-    // User-facing date label for due badges.
+    // User-facing date label for due badges (fixed MM/DD/YYYY format).
     function formatDate(dueDate) {
         if (!dueDate) {
             return "No due date";
         }
 
-        const parsedDate = new Date(`${dueDate}T00:00:00`);
-        if (Number.isNaN(parsedDate.getTime())) {
+        const normalizedDate = normalizeDueDate(dueDate);
+        if (!normalizedDate) {
             return "No due date";
         }
 
-        return parsedDate.toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric"
-        });
+        const [year, month, day] = normalizedDate.split("-");
+        return `${month}/${day}/${year}`;
     }
 
     // A task is overdue only when incomplete and due date is before today.
