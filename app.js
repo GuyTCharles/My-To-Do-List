@@ -59,20 +59,50 @@
 
     // Keep only ISO date values (YYYY-MM-DD).
     function normalizeDueDate(value) {
-        if (typeof value !== "string" || value.length === 0) {
+        if (typeof value !== "string") {
             return "";
         }
 
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const trimmedValue = value.trim();
+        if (!trimmedValue) {
             return "";
         }
 
-        const parsedDate = new Date(`${value}T00:00:00`);
-        if (Number.isNaN(parsedDate.getTime())) {
+        let year;
+        let month;
+        let day;
+
+        const isoMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoMatch) {
+            year = isoMatch[1];
+            month = isoMatch[2];
+            day = isoMatch[3];
+        } else {
+            const slashMatch = trimmedValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (!slashMatch) {
+                return "";
+            }
+
+            year = slashMatch[3];
+            month = slashMatch[1].padStart(2, "0");
+            day = slashMatch[2].padStart(2, "0");
+        }
+
+        const yearNumber = Number(year);
+        const monthNumber = Number(month);
+        const dayNumber = Number(day);
+        const parsedDate = new Date(yearNumber, monthNumber - 1, dayNumber);
+
+        if (
+            Number.isNaN(parsedDate.getTime()) ||
+            parsedDate.getFullYear() !== yearNumber ||
+            parsedDate.getMonth() !== monthNumber - 1 ||
+            parsedDate.getDate() !== dayNumber
+        ) {
             return "";
         }
 
-        return value;
+        return `${year}-${month}-${day}`;
     }
 
     // Basic input safety and non-empty validation.
@@ -168,10 +198,9 @@
             return;
         }
 
-        applyMinDateConstraint(input);
-
         const isoDate = getDateInputISOValue(input);
         input.type = "date";
+        applyMinDateConstraint(input);
         input.value = isoDate;
         input.placeholder = "";
         input.classList.remove("date-empty-fallback");
@@ -214,11 +243,16 @@
 
         input.addEventListener("change", function () {
             // Change is a committed picker action, so allow updates and explicit clears.
+            const previousIsoDate = normalizeDueDate(input.dataset.isoDate);
+
             if (input.value === "") {
                 input.dataset.isoDate = "";
             } else {
                 const normalizedDate = getISOFromDateInputElement(input);
-                if (normalizedDate) {
+                if (isPastDate(normalizedDate)) {
+                    alert("Past dates are not allowed. Please choose today or a future date.");
+                    input.dataset.isoDate = !isPastDate(previousIsoDate) ? previousIsoDate : "";
+                } else if (normalizedDate) {
                     input.dataset.isoDate = normalizedDate;
                 }
             }
@@ -228,7 +262,7 @@
         // Some iOS versions update the field on "input" before "change".
         input.addEventListener("input", function () {
             const normalizedDate = getISOFromDateInputElement(input);
-            if (!normalizedDate) {
+            if (!normalizedDate || isPastDate(normalizedDate)) {
                 return;
             }
 
